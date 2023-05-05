@@ -5,6 +5,8 @@
 ## How to Use
 
 ```python
+from cicc_excel.excelwriter import ExcelWriter
+
 # create new writer
 # default font is 宋体, Arial, Times New Roman
 wb = ExcelWriter('export_file_name.xlsx', ch_font="中文字体", num_font="Number Font", en_font="English Font")
