@@ -1,0 +1,8 @@
+# Ignore all .xls and .xlsx files
+*.xls
+*.xlsx
+build/
+dist/
+*.egg-info
+*.pyc
+*.DS_Store
