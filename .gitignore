@@ -1,6 +1,8 @@
 # Ignore all .xls and .xlsx files
 *.xls
 *.xlsx
+*.docx
+*.doc
 build/
 dist/
 *.egg-info

@@ -13,25 +13,30 @@ class ExcelWriter(object):
     """
     Class for writing data to an xlsx file.
     """
-    def __init__(self, filename, en_font='Arial', ch_font='宋体', num_font='Arial'):
+    def __init__(self, filename, en_font='Arial', ch_font='宋体', num_font='Arial', first_row_color=None, first_row_height=None):
         """
         Initialize an open workbook and add a worksheets.
         """
         self.filename = filename
         self.workbook = xlsxwriter.Workbook(filename, {'nan_inf_to_errors':True})
         self.styles = {
-            'normal':{},
-            'hl':{}
+            'normal':{}
         }
+        self.en_font = en_font
+        self.ch_font = ch_font
+        self.num_font = num_font
         self.hl_cols = {}
         #Setting Styles
-        self.header_format = self.workbook.add_format({'border':None,
-                                    'bold': True,
-                                    'font_size': 10,
-                                    'font_name': ch_font,
-                                    'bg_color': '#EEECE1',
-                                    'align': 'center',
-                                    'valign': 'vcenter'})
+        self.first_row_height = first_row_height
+        self.styles['normal']['header'] = self.workbook.add_format({
+            'border':None,
+            'bold': True,
+            'font_size': 10,
+            'font_name': ch_font,
+            'bg_color': first_row_color,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
         self.styles['normal']['number_format'] = self.workbook.add_format({
             'font_size': 10,
             'align': 'right',
@@ -66,7 +71,7 @@ class ExcelWriter(object):
             'valign': 'vcenter'
         })
         self.styles['normal']['sn_format'] = self.workbook.add_format({
-            'font_name': en_font,
+            'font_name': num_font,
             'font_size': 10,
             'align': 'left',
             'valign': 'vcenter',
@@ -76,80 +81,11 @@ class ExcelWriter(object):
             'font_size': 10,
             'align': 'right',
             'valign': 'vcenter',
-            'font_name': en_font,
+            'font_name': num_font,
             'num_format':'yyyy/mm/dd'
         })
         self.styles['normal']['default_format'] = self.workbook.add_format({
             'font_size':10,
-            'align': 'left',
-            'valign': 'vcenter'
-        })
-        # Set Highlight Styles
-        self.styles['hl']['number_format'] = self.workbook.add_format({
-            'font_size': 10,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'align': 'right',
-            'valign': 'vcenter',
-            'font_name': num_font,
-            'num_format': '#,##0'
-        })
-        self.styles['hl']['worktime_format'] = self.workbook.add_format({
-            'font_size': 10,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'align': 'right',
-            'valign': 'vcenter',
-            'font_name': num_font,
-            'num_format': '#,##0.00'
-        })
-        self.styles['hl']['percent_format'] = self.workbook.add_format({
-            'font_size': 10,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'align': 'right',
-            'valign': 'vcenter',
-            'font_name': num_font,
-            'num_format': '0.00%'
-        })
-        self.styles['hl']['chinese_format'] = self.workbook.add_format({
-            'font_name': ch_font,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'font_size': 10,
-            'align': 'left',
-            'valign': 'vcenter'
-        })
-        self.styles['hl']['english_format'] = self.workbook.add_format({
-            'font_name': en_font,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'font_size': 10,
-            'valign': 'vcenter',
-            'align': 'left'
-        })
-        self.styles['hl']['sn_format'] = self.workbook.add_format({
-            'font_name': en_font,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'font_size': 10,
-            'align': 'left',
-            'valign': 'vcenter',
-            'bold': True
-        })
-        self.styles['hl']['date_format'] = self.workbook.add_format({
-            'font_size': 10,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
-            'align': 'right',
-            'valign': 'vcenter',
-            'font_name': en_font,
-            'num_format':'yyyy/mm/dd'
-        })
-        self.styles['hl']['default_format'] = self.workbook.add_format({
-            'font_size':10,
-            'bg_color': '#EEECE1',
-            'font_color': '#9B3519',
             'align': 'left',
             'valign': 'vcenter'
         })
@@ -179,8 +115,16 @@ class ExcelWriter(object):
         headers = list(self.data.columns)
         # add header
         for col_num, header_title in enumerate(headers):
-            ws.write(0, col_num, header_title)
-        self.set_first_row_format(sheet_name)
+            #set high light column
+            style = self.styles['normal']['header']
+            if sheet_name in self.hl_cols and header_title in self.hl_cols[sheet_name]:
+                style = self.styles[sheet_name][header_title]['header']
+            ws.write(0, col_num, header_title, style)
+        #set header height        
+        ws.set_row(0, self.first_row_height, None)
+        ws.autofilter(0, 0, ws.dim_rowmax, ws.dim_colmax)
+
+        #classify cols
         date_columns = []
         num_columns = []
         text_columns = []
@@ -190,7 +134,7 @@ class ExcelWriter(object):
         for col_name in self.data.columns:
             if pd.api.types.is_datetime64_dtype(self.data[col_name]):
                 date_columns.append(col_name)
-            elif '%' in col_name:
+            elif '%' in col_name or '率' in col_name:
                 percent_columns.append(col_name)
             elif '工号' in col_name or '编号' in col_name or '编码' in col_name:
                 sn_columns.append(col_name)
@@ -206,7 +150,7 @@ class ExcelWriter(object):
             #set high light column
             style = self.styles['normal']
             if sheet_name in self.hl_cols and column_name in self.hl_cols[sheet_name]:
-                style = self.styles['hl']
+                style = self.styles[sheet_name][column_name]
             #set width
             if column_name in date_columns:
                 ws.set_column(col_num, col_num, self.column_width['date'], None)
@@ -267,17 +211,6 @@ class ExcelWriter(object):
         Add a new format to the workbook.
         """
         return self.workbook.add_format(format)
-    
-    def set_first_row_format(self, sheet_name='Sheet1'):
-        """
-        Add a format to the first row.
-        """
-        ws = self.workbook.get_worksheet_by_name(sheet_name)
-        if ws is not None:
-            ws.set_row(0, 20, self.header_format)
-            ws.autofilter(0, 0, ws.dim_rowmax,ws.dim_colmax)
-        else:
-            print("Error: worksheets", sheet_name, "not found")
 
     def set_global_format(self):
         """
@@ -306,31 +239,108 @@ class ExcelWriter(object):
         else:
             print("Error: worksheets", sheet_name, "not found")
 
-    def hide_col(self, s_col=0, end_col=0, sheet_name='Sheet1'):
+    def hide_col(self, start_col=0, end_col=0, sheet_name='Sheet1'):
         """
         Hide acolumns.
         """
         ws = self.workbook.get_worksheet_by_name(sheet_name)
         if ws is not None:
-            ws.set_column(s_col, end_col, None, None, {'hidden': True})
-        else:
-            print("Error: worksheets", sheet_name, "not found")
-
-    def collapse_col(self, s_col=0, end_col=0, sheet_name='Sheet1'):
-        """
-        Hide acolumns.
-        """
-        ws = self.workbook.get_worksheet_by_name(sheet_name)
-        if ws is not None:
-            ws.set_column(s_col, end_col, None, None, {'collapsed': True})
+            ws.set_column(start_col-1, end_col-1, None, None, {'hidden': True})
         else:
             print("Error: worksheets", sheet_name, "not found")
     
-    def set_hl_col_by_names(self, col_names, sheet_name):
+    def set_hl_col_by_names(self, col_name, sheet_name, hl_bg_color='#EEECE1', hl_color='#000000'):
         """
         Set col by col name
         """
-        self.hl_cols[sheet_name] = col_names
+        if self.hl_cols.get(sheet_name) is None:
+            self.hl_cols[sheet_name] = [col_name]
+        else:
+            self.hl_cols[sheet_name].append(col_name)
+        
+        if self.styles.get(sheet_name) is None:
+            self.styles[sheet_name] = {}
+        if self.styles[sheet_name].get(col_name) is None:
+            self.styles[sheet_name][col_name] = {}
+         # Set Highlight Styles
+        self.styles[sheet_name][col_name]['header'] = self.workbook.add_format({
+            'border':None,
+            'bold': True,
+            'font_size': 10,
+            'font_name': self.ch_font,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+        self.styles[sheet_name][col_name]['number_format'] = self.workbook.add_format({
+            'font_size': 10,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'align': 'right',
+            'valign': 'vcenter',
+            'font_name': self.num_font,
+            'num_format': '#,##0'
+        })
+        self.styles[sheet_name][col_name]['worktime_format'] = self.workbook.add_format({
+            'font_size': 10,
+            'bg_color': hl_bg_color,
+            'font_color': 'hl_color',
+            'align': 'right',
+            'valign': 'vcenter',
+            'font_name': self.num_font,
+            'num_format': '#,##0.00'
+        })
+        self.styles[sheet_name][col_name]['percent_format'] = self.workbook.add_format({
+            'font_size': 10,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'align': 'right',
+            'valign': 'vcenter',
+            'font_name': self.num_font,
+            'num_format': '0.00%'
+        })
+        self.styles[sheet_name][col_name]['chinese_format'] = self.workbook.add_format({
+            'font_name': self.ch_font,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'font_size': 10,
+            'align': 'left',
+            'valign': 'vcenter'
+        })
+        self.styles[sheet_name][col_name]['english_format'] = self.workbook.add_format({
+            'font_name': self.en_font,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'font_size': 10,
+            'valign': 'vcenter',
+            'align': 'left'
+        })
+        self.styles[sheet_name][col_name]['sn_format'] = self.workbook.add_format({
+            'font_name': self.num_font,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'font_size': 10,
+            'align': 'left',
+            'valign': 'vcenter',
+            'bold': True
+        })
+        self.styles[sheet_name][col_name]['date_format'] = self.workbook.add_format({
+            'font_size': 10,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'align': 'right',
+            'valign': 'vcenter',
+            'font_name': self.num_font,
+            'num_format':'yyyy/mm/dd'
+        })
+        self.styles[sheet_name][col_name]['default_format'] = self.workbook.add_format({
+            'font_size':10,
+            'bg_color': hl_bg_color,
+            'font_color': hl_color,
+            'align': 'left',
+            'valign': 'vcenter'
+        })
 
 
 
