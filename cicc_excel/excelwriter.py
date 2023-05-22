@@ -28,15 +28,25 @@ class ExcelWriter(object):
         self.hl_cols = {}
         #Setting Styles
         self.first_row_height = first_row_height
-        self.styles['normal']['header'] = self.workbook.add_format({
-            'border':None,
-            'bold': True,
-            'font_size': 10,
-            'font_name': ch_font,
-            'bg_color': first_row_color,
-            'align': 'center',
-            'valign': 'vcenter'
-        })
+        if first_row_color is None:
+            self.styles['normal']['header'] = self.workbook.add_format({
+                'border':None,
+                'bold': True,
+                'font_size': 10,
+                'font_name': ch_font,
+                'align': 'center',
+                'valign': 'vcenter'
+            })
+        else:
+            self.styles['normal']['header'] = self.workbook.add_format({
+                'border':None,
+                'bold': True,
+                'font_size': 10,
+                'font_name': ch_font,
+                'bg_color': first_row_color,
+                'align': 'center',
+                'valign': 'vcenter'
+            })
         self.styles['normal']['number_format'] = self.workbook.add_format({
             'font_size': 10,
             'align': 'right',
@@ -241,11 +251,22 @@ class ExcelWriter(object):
 
     def hide_col(self, start_col=0, end_col=0, sheet_name='Sheet1'):
         """
-        Hide acolumns.
+        Hide columns.
         """
         ws = self.workbook.get_worksheet_by_name(sheet_name)
         if ws is not None:
             ws.set_column(start_col-1, end_col-1, None, None, {'hidden': True})
+        else:
+            print("Error: worksheets", sheet_name, "not found")
+    
+    def collapse_col(self, start_col=0, end_col=0, sheet_name='Sheet1'):
+        """
+        collapse columns.
+        """
+        ws = self.workbook.get_worksheet_by_name(sheet_name)
+        if ws is not None:
+        #collapsed note does not work, use hidden + level instead.
+            ws.set_column(start_col-1, end_col-1, None, None, {'hidden': True, 'level': 1})
         else:
             print("Error: worksheets", sheet_name, "not found")
     
@@ -341,6 +362,3 @@ class ExcelWriter(object):
             'align': 'left',
             'valign': 'vcenter'
         })
-
-
-

@@ -25,6 +25,9 @@ wb.write_data('sheet_name')
 #hide cols
 wb.hide_col(5,12,'sheet_name')
 
+#collapse cols (have a + on top)
+wb.collapse_col(5,12,'sheet_name')
+
 #freeze cell
 wb.freeze(1,4, 'sheet_name')
 
