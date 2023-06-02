@@ -10,7 +10,8 @@ from cicc_excel.excelwriter import ExcelWriter
 # create new writer
 # default font is 宋体, Arial, Times New Roman
 # to setup a percentage column, put a % in column name
-wb = ExcelWriter('export_file_name.xlsx', ch_font="中文字体", num_font="Number Font", en_font="English Font", first_row_color='#EEECE1', first_row_height=20)
+# default col width will adjust by font_size
+wb = ExcelWriter('export_file_name.xlsx', ch_font="中文字体", num_font="Number Font", en_font="English Font", first_row_color='#EEECE1', first_row_height=20, font_size=10)
 
 #load data into writer in pandas dataframe
 wb.load_data(df)

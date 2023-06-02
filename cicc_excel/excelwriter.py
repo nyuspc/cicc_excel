@@ -13,7 +13,7 @@ class ExcelWriter(object):
     """
     Class for writing data to an xlsx file.
     """
-    def __init__(self, filename, en_font='Arial', ch_font='宋体', num_font='Arial', first_row_color=None, first_row_height=None):
+    def __init__(self, filename, en_font='Arial', ch_font='宋体', num_font='Arial', first_row_color=None, first_row_height=None, font_size=10):
         """
         Initialize an open workbook and add a worksheets.
         """
@@ -25,6 +25,7 @@ class ExcelWriter(object):
         self.en_font = en_font
         self.ch_font = ch_font
         self.num_font = num_font
+        self.font_size = font_size
         self.hl_cols = {}
         #Setting Styles
         self.first_row_height = first_row_height
@@ -32,7 +33,7 @@ class ExcelWriter(object):
             self.styles['normal']['header'] = self.workbook.add_format({
                 'border':None,
                 'bold': True,
-                'font_size': 10,
+                'font_size': font_size,
                 'font_name': ch_font,
                 'align': 'center',
                 'valign': 'vcenter'
@@ -41,28 +42,28 @@ class ExcelWriter(object):
             self.styles['normal']['header'] = self.workbook.add_format({
                 'border':None,
                 'bold': True,
-                'font_size': 10,
+                'font_size': font_size,
                 'font_name': ch_font,
                 'bg_color': first_row_color,
                 'align': 'center',
                 'valign': 'vcenter'
             })
         self.styles['normal']['number_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'right',
             'valign': 'vcenter',
             'font_name': num_font,
             'num_format': '#,##0'
         })
         self.styles['normal']['worktime_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'right',
             'valign': 'vcenter',
             'font_name': num_font,
             'num_format': '#,##0.00'
         })
         self.styles['normal']['percent_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'right',
             'valign': 'vcenter',
             'font_name': num_font,
@@ -70,44 +71,45 @@ class ExcelWriter(object):
         })
         self.styles['normal']['chinese_format'] = self.workbook.add_format({
             'font_name': ch_font,
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'left',
             'valign': 'vcenter'
         })
         self.styles['normal']['english_format'] = self.workbook.add_format({
             'font_name': en_font,
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'left',
             'valign': 'vcenter'
         })
         self.styles['normal']['sn_format'] = self.workbook.add_format({
             'font_name': num_font,
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'left',
             'valign': 'vcenter',
             'bold': True
         })
         self.styles['normal']['date_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': font_size,
             'align': 'right',
             'valign': 'vcenter',
             'font_name': num_font,
             'num_format':'yyyy/mm/dd'
         })
         self.styles['normal']['default_format'] = self.workbook.add_format({
-            'font_size':10,
+            'font_size': font_size,
             'align': 'left',
             'valign': 'vcenter'
         })
         #set default width
+        width_ratio = font_size/10
         self.column_width = {
-            'number': 15,
-            'worktime': 10,
-            'date': 10,
-            'percent': 8,
-            'text': 15,
-            'sn': 8,
-            'default': 10
+            'number': 12 * width_ratio,
+            'worktime': 5 * width_ratio,
+            'date': 8 * width_ratio,
+            'percent': 7 * width_ratio,
+            'text': 10 * width_ratio,
+            'sn': 8 * width_ratio,
+            'default': 8 * width_ratio
         }
     
     def load_data(self, data):
@@ -255,7 +257,8 @@ class ExcelWriter(object):
         """
         ws = self.workbook.get_worksheet_by_name(sheet_name)
         if ws is not None:
-            ws.set_column(start_col-1, end_col-1, None, None, {'hidden': True})
+            for col in range(start_col, end_col):
+                ws.set_column(col-1, col, None, None, {'hidden': True})
         else:
             print("Error: worksheets", sheet_name, "not found")
     
@@ -266,7 +269,8 @@ class ExcelWriter(object):
         ws = self.workbook.get_worksheet_by_name(sheet_name)
         if ws is not None:
         #collapsed note does not work, use hidden + level instead.
-            ws.set_column(start_col-1, end_col-1, None, None, {'hidden': True, 'level': 1})
+            for col in range(start_col, end_col):
+                ws.set_column(col-1, col, None, None, {'hidden': True, 'level': 1})
         else:
             print("Error: worksheets", sheet_name, "not found")
     
@@ -287,7 +291,7 @@ class ExcelWriter(object):
         self.styles[sheet_name][col_name]['header'] = self.workbook.add_format({
             'border':None,
             'bold': True,
-            'font_size': 10,
+            'font_size': self.font_size,
             'font_name': self.ch_font,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
@@ -295,7 +299,7 @@ class ExcelWriter(object):
             'valign': 'vcenter'
         })
         self.styles[sheet_name][col_name]['number_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': self.font_size,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
             'align': 'right',
@@ -304,7 +308,7 @@ class ExcelWriter(object):
             'num_format': '#,##0'
         })
         self.styles[sheet_name][col_name]['worktime_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': self.font_size,
             'bg_color': hl_bg_color,
             'font_color': 'hl_color',
             'align': 'right',
@@ -313,7 +317,7 @@ class ExcelWriter(object):
             'num_format': '#,##0.00'
         })
         self.styles[sheet_name][col_name]['percent_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': self.font_size,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
             'align': 'right',
@@ -325,7 +329,7 @@ class ExcelWriter(object):
             'font_name': self.ch_font,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
-            'font_size': 10,
+            'font_size': self.font_size,
             'align': 'left',
             'valign': 'vcenter'
         })
@@ -333,7 +337,7 @@ class ExcelWriter(object):
             'font_name': self.en_font,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
-            'font_size': 10,
+            'font_size': self.font_size,
             'valign': 'vcenter',
             'align': 'left'
         })
@@ -341,13 +345,13 @@ class ExcelWriter(object):
             'font_name': self.num_font,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
-            'font_size': 10,
+            'font_size': self.font_size,
             'align': 'left',
             'valign': 'vcenter',
             'bold': True
         })
         self.styles[sheet_name][col_name]['date_format'] = self.workbook.add_format({
-            'font_size': 10,
+            'font_size': self.font_size,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
             'align': 'right',
@@ -356,7 +360,7 @@ class ExcelWriter(object):
             'num_format':'yyyy/mm/dd'
         })
         self.styles[sheet_name][col_name]['default_format'] = self.workbook.add_format({
-            'font_size':10,
+            'font_size': self.font_size,
             'bg_color': hl_bg_color,
             'font_color': hl_color,
             'align': 'left',
