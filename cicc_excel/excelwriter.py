@@ -181,8 +181,8 @@ class ExcelWriter(object):
             #write cells    
             for row_num, cell_value in enumerate(self.data[column_name]):
                 if pd.isnull(cell_value):
-                    ws.write(row_num + 1, col_num, '')
-                elif column_name in date_columns:
+                    cell_value = ''
+                if column_name in date_columns:
                     ws.write(row_num + 1, col_num, cell_value, style['date_format'])
                 elif column_name in sn_columns:
                     ws.write(row_num + 1, col_num, cell_value, style['sn_format'])
