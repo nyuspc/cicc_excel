@@ -273,6 +273,18 @@ class ExcelWriter(object):
                 ws.set_column(col-1, col, None, None, {'hidden': True, 'level': 1})
         else:
             print("Error: worksheets", sheet_name, "not found")
+
+    def collapse_row(self, start_row=0, end_row=0, sheet_name='Sheet1'):
+        """
+        collapse rows.
+        """
+        ws = self.workbook.get_worksheet_by_name(sheet_name)
+        if ws is not None:
+        #collapsed note does not work, use hidden + level instead.
+            for row in range(start_row, end_row):
+                ws.set_row(row-1, row, None, None, {'hidden': True, 'level': 1})
+        else:
+            print("Error: worksheets", sheet_name, "not found")
     
     def set_hl_col_by_names(self, col_name, sheet_name, hl_bg_color='#EEECE1', hl_color='#000000'):
         """
